@@ -259,6 +259,9 @@ app.registerExtension({
 
         nodeType.prototype.onDrawForeground = function (ctx) {
             if (originalOnDrawForeground) originalOnDrawForeground.call(this, ctx);
+
+            if (this.collapsed) return;
+
             this.drawCurveEditor(ctx);
         };
 
