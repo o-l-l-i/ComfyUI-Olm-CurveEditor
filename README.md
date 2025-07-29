@@ -110,6 +110,23 @@ Feedback is welcome! Feel free to open an issue if you encounter a problem or ha
 
 ---
 
+## License & Usage Terms
+
+Copyright (c) 2025 Olli Sorjonen
+
+This project is source-available, but not open-source under a standard open-source license, and not freeware.
+You may use and experiment with it freely, and any results you create with it are yours to use however you like.
+
+However:
+
+Redistribution, resale, rebranding, or claiming authorship of this code or extension is strictly prohibited without explicit written permission.
+
+Use at your own risk. No warranties or guarantees are provided.
+
+The only official repository for this project is: 👉 https://github.com/o-l-l-i/ComfyUI-Olm-CurveEditor
+
+---
+
 ## Author
 
 Created by [@o-l-l-i](https://github.com/o-l-l-i)
