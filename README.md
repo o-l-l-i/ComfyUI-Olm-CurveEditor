@@ -4,12 +4,16 @@ A single-purpose, multi-channel curve editor for ComfyUI, providing precise colo
 
 It’s a focused, lightweight, and standalone solution built specifically for one task: applying color curves cleanly and efficiently.
 
-![Olm Curve Editor image](./assets/olm-curve-editor_splash.png)
+![Olm Curve Editor image](./assets/olm-curve-editor_splash2.png)
 
 - **Author:** Olli Sorjonen
 - **GitHub:** [https://github.com/o-l-l-i](https://github.com/o-l-l-i)
 - **X:** [https://x.com/Olmirad](https://x.com/Olmirad)
-- **Version:1.0.0**
+- **Version:1.0.1**
+  - Reset all feature added
+  - Responsive, scalable curve editor
+  - Better curve rendering
+  - Code refactoring
 
 ---
 
@@ -25,16 +29,16 @@ You can switch between RGB and Luma channels, edit their curves independently, a
 
 - 🎚️ **Editable Curve Graph**
   - Realtime editing and visualization of the curves.
+  - Responsive scaling curve editor area.
   - Enforces clamping of endpoints at 0 and 1.
   - Custom curve type which avoids overshoots.
 - 🖱️ **Smooth UX**
   - Click to add, drag to move, shift-click to remove points.
 - 🎨 **Channel Tabs**
   - R, G, B, and Luma curves with independent data.
-- 🔁 **Reset Button**
+- 🔁 **Reset Buttons**
+  - Reset all channels.
   - Per-channel reset to default linear curve.
-- 📤 **Auto-Serialization**
-  - Curve values are saved as JSON and sent to the backend.
 - 🖼️ **Presets**
   - Comes with 20 presets, you can also create your own.
   - loaded from **curve_presets** folder within the node's folder.
@@ -61,18 +65,9 @@ ComfyUI/
 └────── <presets are here>
 ```
 
+Restart ComfyUI to load the new node.
 
-2. **Check/install dependencies.**
-
-You should already have all of the dependencies installed if you have ComfyUI up and running.
-Remember to always active the virtual environment (venv) before installing anything.
-
-```bash
-# Most likely you don't need to do this:
-pip install -r requirements.txt
-```
-
-Restart ComfyUI after installation.
+✅ No extra dependencies — works out of the box.
 
 ---
 
@@ -103,9 +98,7 @@ Restart ComfyUI after installation.
 
 - No built-in undo/redo support (yet, but ComfyUI's undo works quite OK).
 - Max points per curve is limited (to prevent chaos).
-- Basic UI layout; might feel cramped at times, but you can zoom in closer on the node canvas.
-- Curves are linear-interpolated - no Bezier smoothing yet.
-- Reset applies only per-channel, not globally.
+- Curves are linear-interpolated in the backend (I will implement a matching curve later).
 
 ---
 

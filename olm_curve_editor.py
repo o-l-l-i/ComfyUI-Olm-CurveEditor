@@ -5,7 +5,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 
-@PromptServer.instance.routes.get("/api/curve_presets/list")
+@PromptServer.instance.routes.get("/olm/api/curve_presets/list")
 async def list_curve_presets(request):
     folder = os.path.join(os.path.dirname(__file__), "curve_presets")
     try:
@@ -30,7 +30,7 @@ async def list_curve_presets(request):
         return web.json_response({"presets": []})
 
 
-@PromptServer.instance.routes.get("/api/curve_presets/load")
+@PromptServer.instance.routes.get("/olm/api/curve_presets/load")
 async def load_curve_preset(request):
     filename = request.query.get("filename", "")
     folder = os.path.join(os.path.dirname(__file__), "curve_presets")
@@ -46,33 +46,44 @@ async def load_curve_preset(request):
         return web.json_response({"error": str(e)}, status=500)
 
 
-@PromptServer.instance.routes.post("/api/curve/save")
+@PromptServer.instance.routes.post("/olm/api/curve/save")
 async def save_curve(request):
     try:
         data = await request.json()
-        curve_data = data.get('curve_data', '')
-        node_id = data.get('node_id', 'default')
-        debug_logging = data.get('debug_logging', False)
+        curve_data = data.get("curve_data", "")
+        node_id = data.get("node_id", "default")
+        debug_logging = data.get("debug_logging", False)
         if debug_logging:
-            print('=== API: save_curve called ===')
+            print("=== API: save_curve called ===")
 
         try:
             curves = json.loads(curve_data)
             if not isinstance(curves, dict):
-                raise ValueError("Curve data must be a dictionary with keys 'r','g','b','luma'")
+                raise ValueError(
+                    "Curve data must be a dictionary with keys 'r','g','b','luma'"
+                )
 
-            required_channels = ['r', 'g', 'b', 'luma']
+            required_channels = ["r", "g", "b", "luma"]
             for ch in required_channels:
                 if ch not in curves:
                     raise ValueError(f"Missing curve for channel '{ch}'")
-                if not (isinstance(curves[ch], list) and all(isinstance(p, dict) and "x" in p and "y" in p for p in curves[ch])):
+                if not (
+                    isinstance(curves[ch], list)
+                    and all(
+                        isinstance(p, dict) and "x" in p and "y" in p
+                        for p in curves[ch]
+                    )
+                ):
                     raise ValueError(f"Invalid curve format for channel '{ch}'")
 
             if debug_logging:
                 print(f"=== DEBUG: Curve preset JSON for node {node_id} ===")
+
                 print(json.dumps(curves, indent=2))
                 print("=== End of curve preset JSON ===")
-                print("Copy this to a <filename>.json, and put into the curve_presets within the node's folder if you want a new preset!")
+                print(
+                    "Copy this to a <filename>.json, and put into the curve_presets within the node's folder if you want a new preset!"
+                )
 
         except json.JSONDecodeError:
             return web.json_response({"error": "Invalid curve JSON"}, status=400)
@@ -85,6 +96,7 @@ async def save_curve(request):
 
     except Exception as e:
         import traceback
+
         traceback.print_exc()
         return web.json_response({"error": str(e)}, status=500)
 
@@ -95,23 +107,30 @@ class OlmCurveEditor:
         return {
             "required": {
                 "image": ("IMAGE",),
-                "strength": ("FLOAT", {"default": 1.0, "min": 0, "max": 1, "step": 0.01}),
+                "strength": (
+                    "FLOAT",
+                    {"default": 1.0, "min": 0, "max": 1, "step": 0.01},
+                ),
                 "debug_logging": ("BOOLEAN", {"default": False}),
             },
             "hidden": {
                 "curve_json": ("STRING", {"default": ""}),
                 "node_id": "UNIQUE_ID",
-            }
+            },
         }
 
     RETURN_TYPES = ("IMAGE",)
     FUNCTION = "apply_curve"
-    CATEGORY = "Image Processing/Curve Editor"
-
+    CATEGORY = "image/color"
 
     def apply_curve(self, image, strength, debug_logging, curve_json, node_id):
         default_curve = [{"x": 0, "y": 0}, {"x": 1, "y": 1}]
-        curves = {"r": default_curve, "g": default_curve, "b": default_curve, "luma": default_curve}
+        curves = {
+            "r": default_curve,
+            "g": default_curve,
+            "b": default_curve,
+            "luma": default_curve,
+        }
 
         if curve_json:
             try:
@@ -127,22 +146,42 @@ class OlmCurveEditor:
 
             except Exception as e:
                 print(f"❌ Error parsing curve JSON: {e}")
-                curves = {"r": default_curve, "g": default_curve, "b": default_curve, "luma": default_curve}
+                curves = {
+                    "r": default_curve,
+                    "g": default_curve,
+                    "b": default_curve,
+                    "luma": default_curve,
+                }
 
         if isinstance(curves, list):
             curves = {"r": curves, "g": curves, "b": curves, "luma": curves}
         elif not isinstance(curves, dict):
-            curves = {"r": default_curve, "g": default_curve, "b": default_curve, "luma": default_curve}
+            curves = {
+                "r": default_curve,
+                "g": default_curve,
+                "b": default_curve,
+                "luma": default_curve,
+            }
 
         for ch in ["r", "g", "b", "luma"]:
-            if ch not in curves or not isinstance(curves[ch], list) or not all("x" in p and "y" in p for p in curves[ch]):
+            if (
+                ch not in curves
+                or not isinstance(curves[ch], list)
+                or not all("x" in p and "y" in p for p in curves[ch])
+            ):
                 curves[ch] = default_curve
 
         def create_interpolator(points):
             points = sorted(points, key=lambda p: p["x"])
             x = [p["x"] for p in points]
             y = [p["y"] for p in points]
-            return interp1d(x, y, kind="linear", bounds_error=False, fill_value=(float(y[0]), float(y[-1]))) # type: ignore
+            return interp1d(
+                x,
+                y,
+                kind="linear",
+                bounds_error=False,
+                fill_value=(float(y[0]), float(y[-1])),
+            )
 
         r_interp = create_interpolator(curves["r"])
         g_interp = create_interpolator(curves["g"])
@@ -155,8 +194,13 @@ class OlmCurveEditor:
             raise ValueError("Expected RGB image with 3 channels.")
 
         def is_curve_active(curve):
-            return not (len(curve) == 2 and curve[0]["x"] == 0 and curve[0]["y"] == 0 and
-                    curve[1]["x"] == 1 and curve[1]["y"] == 1)
+            return not (
+                len(curve) == 2
+                and curve[0]["x"] == 0
+                and curve[0]["y"] == 0
+                and curve[1]["x"] == 1
+                and curve[1]["y"] == 1
+            )
 
         luma_active = is_curve_active(curves["luma"])
         rgb_active = any(is_curve_active(curves[ch]) for ch in ["r", "g", "b"])
@@ -181,11 +225,18 @@ class OlmCurveEditor:
             current_img = img_np.copy()
 
             if luma_active:
-                luma = 0.2126 * current_img[:, :, 0] + 0.7152 * current_img[:, :, 1] + 0.0722 * current_img[:, :, 2]
+
+                luma = (
+                    0.2126 * current_img[:, :, 0]
+                    + 0.7152 * current_img[:, :, 1]
+                    + 0.0722 * current_img[:, :, 2]
+                )
 
                 mapped_luma = np.clip(luma_interp(luma), 0, 1)
 
-                luma_ratio = np.divide(mapped_luma, luma, out=np.ones_like(luma), where=luma > 1e-6)
+                luma_ratio = np.divide(
+                    mapped_luma, luma, out=np.ones_like(luma), where=luma > 1e-6
+                )
 
                 current_img[:, :, 0] *= luma_ratio
                 current_img[:, :, 1] *= luma_ratio
@@ -194,7 +245,9 @@ class OlmCurveEditor:
                 current_img = np.clip(current_img, 0, 1)
 
                 if debug_logging:
-                    print(f"   ✅ Applied luma curve (range: {mapped_luma.min():.3f} - {mapped_luma.max():.3f})")
+                    print(
+                        f"   ✅ Applied luma curve (range: {mapped_luma.min():.3f} - {mapped_luma.max():.3f})"
+                    )
 
             if rgb_active:
                 if is_curve_active(curves["r"]):
@@ -214,7 +267,9 @@ class OlmCurveEditor:
                         print("B curve not active, at default values, skipping.")
 
                 if debug_logging:
-                    active_channels = [ch for ch in ["r", "g", "b"] if is_curve_active(curves[ch])]
+                    active_channels = [
+                        ch for ch in ["r", "g", "b"] if is_curve_active(curves[ch])
+                    ]
                     print(f"   ✅ Applied RGB curves: {', '.join(active_channels)}")
 
             if strength < 1.0:
@@ -229,11 +284,6 @@ class OlmCurveEditor:
 
 WEB_DIRECTORY = "./web/"
 
+NODE_CLASS_MAPPINGS = {"OlmCurveEditor": OlmCurveEditor}
 
-NODE_CLASS_MAPPINGS = {
-    "OlmCurveEditor": OlmCurveEditor
-}
-
-NODE_DISPLAY_NAME_MAPPINGS = {
-    "OlmCurveEditor": "Olm Curve Editor"
-}
+NODE_DISPLAY_NAME_MAPPINGS = {"OlmCurveEditor": "Olm Curve Editor"}
