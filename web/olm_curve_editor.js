@@ -230,10 +230,68 @@ app.registerExtension({
     };
 
     nodeType.prototype.onAdded = function () {
+      const node = this;
+
+      const originalOnMouseDown = node.onMouseDown;
+      const originalOnMouseMove = node.onMouseMove;
+      const originalOnMouseUp = node.onMouseUp;
+      const originalOnMouseLeave = node.onMouseLeave;
+
+      node.onMouseDown = function (e, pos, canvas) {
+        const wasHandled = originalOnMouseDown?.call(this, e, pos, canvas);
+        if (wasHandled) return true;
+
+        if (this.channelButtons?.onMouseDown?.(e, pos)) return true;
+        if (this.resetBar?.onMouseDown?.(e, pos)) return true;
+        if (this.curveEditor?.onMouseDown?.(e, [pos[0], pos[1]])) return true;
+
+        return false;
+      };
+
+      node.onMouseMove = function (e, pos, canvas) {
+        const wasHandled = originalOnMouseMove?.call(this, e, pos, canvas);
+        let handled = wasHandled ?? false;
+
+        if (this.channelButtons?.onMouseMove?.(e, pos)) handled = true;
+        if (this.resetBar?.onMouseMove?.(e, pos)) handled = true;
+        if (this.curveEditor?.onMouseMove?.(e, [pos[0], pos[1]]))
+          handled = true;
+
+        return handled;
+      };
+
+      node.onMouseUp = function (e, pos, canvas) {
+        const wasHandled = originalOnMouseUp?.call(this, e, pos, canvas);
+        if (wasHandled) return true;
+
+        this.channelButtons?.onMouseUp?.(e, pos);
+        this.resetBar?.onMouseUp?.(e, pos);
+        this.curveEditor?.onMouseUp?.(e, [pos[0], pos[1]]);
+
+        this.sendCurveToBackend?.();
+
+        return false;
+      };
+
+      node.onMouseLeave = function (e, pos, canvas) {
+        const wasHandled = originalOnMouseLeave?.call(this, e, pos, canvas);
+        if (wasHandled) return true;
+
+        const fallbackPos = pos ?? [
+          Number.NEGATIVE_INFINITY,
+          Number.NEGATIVE_INFINITY,
+        ];
+
+        this.channelButtons?.onMouseUp?.(e, fallbackPos);
+        this.resetBar?.onMouseUp?.(e, fallbackPos);
+        this.curveEditor?.onMouseUp?.(e, fallbackPos);
+
+        return false;
+      };
+
       removeInputs(this, (inp) =>
         ["FLOAT", "STRING", "BOOLEAN"].includes(inp.type)
       );
-
       setTimeout(() => this.loadCurvePresets(), 50);
     };
 
@@ -284,29 +342,6 @@ app.registerExtension({
       this.drawTabs(ctx);
       this.drawCurveArea(ctx);
       ctx.restore();
-    };
-
-    nodeType.prototype.onMouseDown = function (e, pos) {
-      if (this.channelButtons.onMouseDown(e, pos)) return true;
-      if (this.resetBar.onMouseDown(e, pos)) return true;
-      if (this.curveEditor.onMouseDown(e, [pos[0], pos[1]])) return true;
-      return false;
-    };
-
-    nodeType.prototype.onMouseMove = function (e, pos) {
-      let handled = false;
-      if (this.channelButtons.onMouseMove(e, pos)) handled = true;
-      if (this.resetBar.onMouseMove(e, pos)) handled = true;
-      if (this.curveEditor.onMouseMove(e, [pos[0], pos[1]])) handled = true;
-      return handled;
-    };
-
-    nodeType.prototype.onMouseUp = function (e, pos) {
-      this.channelButtons.onMouseUp();
-      this.resetBar.onMouseUp();
-      this.curveEditor.onMouseUp(e, [pos[0], pos[1]]);
-      this.sendCurveToBackend();
-      return false;
     };
 
     nodeType.prototype._curvePostDebounce = null;

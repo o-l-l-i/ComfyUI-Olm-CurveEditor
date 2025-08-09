@@ -9,11 +9,7 @@ It’s a focused, lightweight, and standalone solution built specifically for on
 - **Author:** Olli Sorjonen
 - **GitHub:** [https://github.com/o-l-l-i](https://github.com/o-l-l-i)
 - **X:** [https://x.com/Olmirad](https://x.com/Olmirad)
-- **Version:1.0.1**
-  - Reset all feature added
-  - Responsive, scalable curve editor
-  - Better curve rendering
-  - Code refactoring
+**Version:** 1.0.1.1 (Chain original mouse event handlers to maintain subgraph header button functionality in ComfyUI frontend 1.24.4 and later.)
 
 ---
 
@@ -107,6 +103,18 @@ Restart ComfyUI to load the new node.
 This is a personal learning project (v1), created to explore custom node development in ComfyUI. While I took care to ensure it functions properly and it has functioned fine in my own use, there may still be bugs, rough edges, or unexpected behavior - so use with caution.
 
 Feedback is welcome! Feel free to open an issue if you encounter a problem or have suggestions or ideas to improve the node.
+
+---
+
+## Version history
+
+- **1.0.1.1** Chain original mouse event handlers to maintain subgraph header button functionality in ComfyUI frontend 1.24.4 and later.
+- **1.0.1**
+  - Reset all feature added
+  - Responsive, scalable curve editor
+  - Better curve rendering
+  - Code refactoring
+- **1.0.0** Initial release
 
 ---
 
